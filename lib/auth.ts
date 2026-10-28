@@ -8,6 +8,10 @@ import config from "@/lib/config-env";
 const isProduction = process.env.NODE_ENV === "production";
 // const resend = new Resend(config.env.resendApiKey);
 
+const googleOAuthConfigured = Boolean(
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+);
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -15,6 +19,25 @@ export const auth = betterAuth({
   trustedOrigins: [config.env.nextPublicUrl],
   secret: config.env.betterAuth.secret,
   baseURL: config.env.betterAuth.url,
+  // Google OAuth hanya aktif bila kredensial dipasang; tanpa itu aplikasi
+  // tetap jalan penuh untuk habit/agenda (BR-09). Scope minimum untuk
+  // membaca daftar kalender dan membuat/memperbarui event.
+  ...(googleOAuthConfigured
+    ? {
+        socialProviders: {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID as string,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+            accessType: "offline",
+            prompt: "consent",
+            scope: [
+              "https://www.googleapis.com/auth/calendar.events",
+              "https://www.googleapis.com/auth/calendar.readonly",
+            ],
+          },
+        },
+      }
+    : {}),
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
