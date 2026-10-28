@@ -5,6 +5,7 @@ export const {
   signIn,
   signUp,
   signOut,
+  linkSocial,
   useSession,
   changePassword,
   resetPassword,
