@@ -10,7 +10,8 @@ export default async function AuthLayoutWrapper({
   const session = await getSession();
 
   if (session) {
-    redirect("/admin");
+    // Pengguna biasa masuk ke agenda, bukan ke panel admin (yang butuh role admin).
+    redirect("/hari-ini");
   }
 
   return <AuthLayout>{children}</AuthLayout>;
