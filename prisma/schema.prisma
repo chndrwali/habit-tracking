@@ -26,6 +26,11 @@ model User {
   credentials Credential[]
   sessions    Session[]
 
+  profile             UserProfile?
+  habits              Habit[]
+  scheduledItems      ScheduledItem[]
+  calendarConnections CalendarConnection[]
+
   role       String?
   banned     Boolean?  @default(false)
   banReason  String?
@@ -106,4 +111,143 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+// ── Perencana Kebiasaan (PRD v1.0) ─────────────────────────────
+// Identitas auth tetap milik Better Auth; profil tambahan dipisah.
+// Completion disimpan pada occurrence (ScheduledItem), bukan hanya pada
+// definisi habit (BR-02). Status: pending | completed | skipped | missed.
+// syncStatus: not_synced | pending | synced | failed.
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  timezone        String   @default("Asia/Jakarta")
+  weekStartsOn    Int      @default(1)
+  timeFormat      String   @default("24")
+  reminderMinutes Int      @default(15)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profile")
+}
+
+model Habit {
+  id                    String    @id @default(cuid())
+  userId                String
+  name                  String
+  description           String?
+  category              String?
+  color                 String    @default("#0EA5A5")
+  defaultDurationMinutes Int      @default(30)
+  archivedAt            DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedules HabitSchedule[]
+  items     ScheduledItem[]
+
+  @@index([userId])
+  @@map("habit")
+}
+
+model HabitSchedule {
+  id              String   @id @default(cuid())
+  habitId         String
+  daysOfWeek      Int[]
+  localTime       String
+  durationMinutes Int
+  effectiveFrom   String?
+  effectiveUntil  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  habit Habit           @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  items ScheduledItem[]
+
+  @@index([habitId])
+  @@map("habit_schedule")
+}
+
+model ScheduledItem {
+  id          String    @id @default(cuid())
+  userId      String
+  habitId     String?
+  scheduleId  String?
+  title       String
+  notes       String?
+  dateKey     String
+  startAt     DateTime
+  endAt       DateTime
+  timezone    String
+  status      String    @default("pending")
+  source      String    @default("habit")
+  completedAt DateTime?
+  syncStatus  String    @default("not_synced")
+  syncError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habit    Habit?            @relation(fields: [habitId], references: [id], onDelete: SetNull)
+  schedule HabitSchedule?    @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  mappings CalendarEventMapping[]
+
+  @@unique([userId, scheduleId, dateKey])
+  @@index([userId, dateKey])
+  @@index([userId, startAt])
+  @@map("scheduled_item")
+}
+
+model CalendarConnection {
+  id          String   @id @default(cuid())
+  userId      String
+  provider    String   @default("google")
+  calendarId  String
+  calendarName String?
+  status      String   @default("connected")
+  connectedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mappings CalendarEventMapping[]
+
+  @@unique([userId, provider])
+  @@map("calendar_connection")
+}
+
+model CalendarEventMapping {
+  id                String    @id @default(cuid())
+  connectionId      String
+  scheduledItemId   String    @unique
+  externalEventId   String
+  externalCalendarId String
+  syncStatus        String    @default("synced")
+  lastSyncedAt      DateTime?
+  error             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  connection    CalendarConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  scheduledItem ScheduledItem      @relation(fields: [scheduledItemId], references: [id], onDelete: Cascade)
+  operations    SyncOperation[]
+
+  @@map("calendar_event_mapping")
+}
+
+model SyncOperation {
+  id         String    @id @default(cuid())
+  mappingId  String?
+  operation  String
+  status     String    @default("pending")
+  attempts   Int       @default(0)
+  nextRetryAt DateTime?
+  error      String?
+  createdAt  DateTime  @default(now())
+
+  mapping CalendarEventMapping? @relation(fields: [mappingId], references: [id], onDelete: Cascade)
+
+  @@map("sync_operation")
 }
