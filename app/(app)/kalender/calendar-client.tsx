@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
-import { signIn } from "@/lib/auth-client";
+import { linkSocial } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { appToast } from "@/components/custom/app-toast";
@@ -79,7 +79,7 @@ export function CalendarClient() {
             <Button
               className="mt-4"
               onClick={() =>
-                signIn.social({ provider: "google", callbackURL: "/kalender" })
+                linkSocial({ provider: "google", callbackURL: "/kalender" })
               }
             >
               Hubungkan Google
