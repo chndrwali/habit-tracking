@@ -90,14 +90,14 @@ export const AuthForm = ({ variant }: AuthFormProps) => {
           email: loginValues.email,
           password: loginValues.password,
           rememberMe: loginValues.remember ?? true,
-          callbackURL: "/admin",
+          callbackURL: "/hari-ini",
         },
         {
           onRequest: () => setLoading(true),
           onSuccess: () => {
             setLoading(false);
             appToast.success("Successfully logged in!");
-            router.push("/admin");
+            router.push("/hari-ini");
           },
           onError: (ctx) => {
             setLoading(false);
