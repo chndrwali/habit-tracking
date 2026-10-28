@@ -31,8 +31,10 @@ import {
   UserPenIcon,
   Ellipsis,
   Laptop,
-  Github,
-  Twitter,
+  // lucide 1.x menghapus ikon brand (Github/Twitter); pakai ikon generik
+  // agar key Icons.github / Icons.twitter tetap ada untuk sidebar lama.
+  Globe,
+  AtSign,
   type LucideProps,
   Layers,
   BriefcaseBusiness,
@@ -129,8 +131,8 @@ export const Icons = {
   sun: Sun,
   moon: Moon,
   laptop: Laptop,
-  github: Github,
-  twitter: Twitter,
+  github: Globe,
+  twitter: AtSign,
   check: Check,
   workspace: Folder,
   teams: Users,
