@@ -46,6 +46,7 @@ const variantConfig = {
     title: "SIGN IN TO YOUR ACCOUNT",
     description: "Enter your email and password to access the app",
     submitLabel: "Sign In",
+    googleLabel: "Masuk dengan Google",
     footerText: "Don't have an account?",
     footerLinkText: "Register now",
     footerLinkHref: "/register",
@@ -54,6 +55,7 @@ const variantConfig = {
     title: "CREATE ACCOUNT, IT'S FREE!",
     description: "Enter your email and password to start registration",
     submitLabel: "Sign Up",
+    googleLabel: "Daftar dengan Google",
     footerText: "Already have an account?",
     footerLinkText: "Go to login",
     footerLinkHref: "/login",
@@ -70,6 +72,25 @@ export const AuthForm = ({ variant }: AuthFormProps) => {
   const router = useRouter();
   const [error, setError] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const onGoogle = async () => {
+    setError(undefined);
+    setGoogleLoading(true);
+    await signIn.social(
+      {
+        provider: "google",
+        callbackURL: "/hari-ini",
+      },
+      {
+        onError: (ctx) => {
+          setGoogleLoading(false);
+          setError(ctx.error.message);
+          appToast.error(`${ctx.error.message}`);
+        },
+      },
+    );
+  };
 
   const form = useForm<LoginFormValues | RegisterFormValues>({
     resolver: zodResolver(isLogin ? loginSchema : registerSchema),
@@ -247,6 +268,22 @@ export const AuthForm = ({ variant }: AuthFormProps) => {
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Spinner /> : config.submitLabel}
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">atau</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loading || googleLoading}
+              onClick={onGoogle}
+            >
+              {googleLoading ? <Spinner /> : config.googleLabel}
             </Button>
 
             <p className="text-sm text-center text-muted-foreground">
